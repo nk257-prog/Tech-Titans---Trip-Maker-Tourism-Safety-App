@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Tourist Safety Portal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Tourist Safety Monitoring</h1>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search for a location...">
+                <button id="search-btn" class="search-button">Search</button>
+            </div>
+            <button id="sidebar-toggle" class="sidebar-toggle">☰ Menu</button>
+        </header>
+
+        <!-- Side Panel -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Control Panel</h3>
+                <button id="sidebar-close" class="sidebar-close">&times;</button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <h4>User Status</h4>
+                    <div id="user-status" class="user-status">
+                        <span id="user-info">Not logged in</span>
+                        <div class="auth-buttons">
+                            <button id="login-btn" class="auth-button">Login</button>
+                            <button id="signup-btn" class="auth-button">Sign Up</button>
+                            <button id="logout-btn" class="auth-button logout-btn" style="display: none;">Logout</button>
+                            <button id="dashboard-btn" class="auth-button" style="display: none;">Authority Dashboard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h4>Location & Tracking</h4>
+                    <div class="sidebar-buttons">
+                        <button id="sos-btn" class="sos-button">🚨 SOS Emergency</button>
+                        <button id="location-btn" class="location-button">📍 Get My Location</button>
+                        <button id="live-tracking-btn" class="tracking-button">🔄 Start Live Tracking</button>
+                        <button id="weather-btn" class="weather-button">🌤️ Check Weather</button>
+                        <button id="todo-btn" class="todo-button">📋 My Todo List</button>
+                    </div>
+                    <div id="tracking-status" class="tracking-status">Tracking: OFF</div>
+                </div>
+
+            </div>
+        </div>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        <div class="info-panel">
+            <div class="location-info">
+                <h3>Current Location</h3>
+                <p id="current-location">Location not available</p>
+            </div>
+            <div class="weather-info">
+                <h3>Weather Information</h3>
+                <div id="weather-display">Click "Check Weather" to get current weather</div>
+            </div>
+            <div class="rating-info">
+                <h3>Location Ratings</h3>
+                <p>Click on the map to rate safety (1-5 stars)</p>
+                <small>Ratings are grouped by 5km proximity areas</small>
+                <div id="ratings-list"></div>
+            </div>
+            <div class="attractions-info">
+                <h3>Tourist Attractions</h3>
+                <div id="attractions-list">Search for a location to see tourist attractions</div>
+            </div>
+            <div class="language-info">
+                <h3>🌐 Local Language & Phrases</h3>
+                <div id="language-info">Search for a location to see local language information</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="form-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="signup-name">Full Name:</label>
+                    <input type="text" id="signup-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email:</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password:</label>
+                    <input type="password" id="signup-password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirm Password:</label>
+                    <input type="password" id="signup-confirm-password" required minlength="6">
+                </div>
+                <button type="submit" class="form-button">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Email Verification Modal -->
+    <div id="verification-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Email Verification</h2>
+            <p>We've sent a verification code to your email. Please enter it below:</p>
+            <div class="form-group">
+                <label for="verification-code">Verification Code:</label>
+                <input type="text" id="verification-code" maxlength="6" required>
+            </div>
+            <button id="verify-btn" class="form-button">Verify Email</button>
+            <button id="resend-code-btn" class="resend-button">Resend Code</button>
+        </div>
+    </div>
+
+    <!-- Authority Dashboard Modal -->
+    <div id="dashboard-modal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close">&times;</span>
+            <h2>🚔 Authority Dashboard</h2>
+            <div class="dashboard-content">
+                <div class="dashboard-section">
+                    <h3>Active Tourists</h3>
+                    <div id="active-tourists">Loading...</div>
+                </div>
+                <div class="dashboard-section">
+                    <h3>Recent Alerts</h3>
+                    <div id="recent-alerts">No recent alerts</div>
+                </div>
+                <div class="dashboard-section">
+                    <h3>Safety Heat Map</h3>
+                    <div id="safety-heatmap">Generating heat map...</div>
+                </div>
+                <div class="dashboard-section">
+                    <h3>AI Behavior Analysis</h3>
+                    <div id="behavior-analysis">Analyzing patterns...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Todo List Modal -->
+    <div id="todo-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>📋 My Tourist Todo List</h2>
+
+            <!-- Add Custom Task Section -->
+            <div class="add-task-section">
+                <h3>Add Custom Task</h3>
+                <div class="form-group">
+                    <input type="text" id="custom-task-input" placeholder="Enter a custom task..." maxlength="100">
+                    <button id="add-custom-task-btn" class="form-button">Add Task</button>
+                </div>
+            </div>
+
+            <!-- Todo Items List -->
+            <div class="todo-list-section">
+                <h3>Your Tasks</h3>
+                <div id="todo-content">
+                    <!-- Todo items will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
